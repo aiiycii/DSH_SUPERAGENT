@@ -56,7 +56,7 @@ def serves(args, profile):
 
 def ps(*options, check=False):
     """Yield `(pid, comm, args)` tuples from `ps`; arguments are split on whitespace, so paths with spaces become several words and only `--profile` and subcommands are inspected."""
-    result = subprocess.run(['ps', '-ww', *options, '-o', 'pid=,ucomm=,args='], check=check, capture_output=True, text=True)
+    result = subprocess.run(['ps', '-ww', *options, '-o', 'pid=,ucomm=,args='], check=check, capture_output=True, text=True, errors='replace')
     for line in result.stdout.splitlines():
         parts = line.split(None, 2)
         if len(parts) == 3 and parts[0].isdigit():

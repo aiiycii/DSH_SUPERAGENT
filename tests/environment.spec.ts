@@ -79,7 +79,7 @@ describe('agent git configuration', () => {
     const deployment = testDeployment({ stateDir: dir, github: { ...testDeployment().github, cli: '/opt/agent tools/gh' } })
     await writeEnvironment(deployment, [])
     // Operator identity variables and git's fallback from the OS username must not apply to worker commits.
-    const env = workerEnv({ PATH: process.env.PATH, HOME: home, GIT_CONFIG_COUNT: '1', GIT_CONFIG_KEY_0: 'core.abbrev', GIT_CONFIG_VALUE_0: '12', GIT_AUTHOR_NAME: 'Operator', GIT_COMMITTER_EMAIL: 'operator@example.com', ...agentVariables(dir) })
+    const env = workerEnv({ PATH: process.env.PATH, LC_ALL: 'C', HOME: home, GIT_CONFIG_COUNT: '1', GIT_CONFIG_KEY_0: 'core.abbrev', GIT_CONFIG_VALUE_0: '12', GIT_AUTHOR_NAME: 'Operator', GIT_COMMITTER_EMAIL: 'operator@example.com', ...agentVariables(dir) })
     const git = async (...args: string[]): Promise<string> => (await exec('git', args, { cwd: dir, env })).stdout.trim()
     await git('init', '-q', 'repo')
     await exec('git', ['-C', 'repo', 'remote', 'add', 'origin', 'git@github.com:acme/widgets.git'], { cwd: dir, env })
@@ -121,7 +121,7 @@ it('removes every spelling of a directory from PATH and keeps the other entries'
 /** Minimal SubprocessRuntime backed by child_process.spawn with an isolated global git config. */
 const subprocess = (config: string): SubprocessRuntime => ({
   spawn: ({ argv, cwd }: { argv: readonly string[]; cwd: string }) => {
-    const child = spawn(argv[0]!, argv.slice(1), { cwd, env: gitEnv({ GIT_CONFIG_GLOBAL: config, GIT_CONFIG_NOSYSTEM: '1' }) })
+    const child = spawn(argv[0]!, argv.slice(1), { cwd, env: gitEnv({ GIT_CONFIG_GLOBAL: config, GIT_CONFIG_NOSYSTEM: '1', LC_ALL: 'C' }) })
     const output = { stdout: '', stderr: '' }
     child.stdout.on('data', chunk => { output.stdout += String(chunk) })
     child.stderr.on('data', chunk => { output.stderr += String(chunk) })
@@ -132,7 +132,7 @@ const subprocess = (config: string): SubprocessRuntime => ({
 }) as unknown as SubprocessRuntime
 describe('ticket directory check', () => {
   const signal = new AbortController().signal
-  const env = () => gitEnv({ GIT_CONFIG_GLOBAL: join(dir, 'global'), GIT_CONFIG_NOSYSTEM: '1' })
+  const env = () => gitEnv({ GIT_CONFIG_GLOBAL: join(dir, 'global'), GIT_CONFIG_NOSYSTEM: '1', LC_ALL: 'C' })
   const git = (...args: string[]) => exec('git', args, { cwd: dir, env: env() })
   const check = (directory: string) => verifyDirectory(join(dir, directory), subprocess(join(dir, 'global')), signal)
   beforeEach(() => { writeFileSync(join(dir, 'global'), '[credential]\n\thelper = global-helper\n') })
